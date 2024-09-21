@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <?!= include('Stylesheet'); ?>
+  </head>
+  <body>
+    <p>The following medical supplies will expire in <b><?!= notificationLevelDays ?> days or less</b>:
+    <table>
+      <thead>
+        <tr>
+          <th scope="col">Item
+          <th scope="col">Expiration Date
+          <th scope="col">Days Remaining
+      <tbody><?!= itemTableBody ?>
+    </table>
+    <p>Visit the Google Sheet for more details:<br>
+    <a href='<?!= sheetUrl ?>'><?!= sheetUrl ?></a>
+  </body>
+</html>
