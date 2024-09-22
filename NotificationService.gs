@@ -11,18 +11,8 @@ const emailRecipients = [
  */
 function expiringItemsInfoNotificationTask() {
   console.log('Starting expiring items notification task: {"notificationLevel": "info"}')
-  const medicalSuppliesData = medicalSuppliesSheet
-    .getRange(
-      1,
-      1,
-      medicalSuppliesSheet.getLastRow(),
-      medicalSuppliesSheet.getLastColumn()
-    )
-    .getValues()
 
-  const items = getJsonFromArray(medicalSuppliesData)
-
-  maybeSendExpiringItemsNotification(items, 'info')
+  maybeSendExpiringItemsNotification('info')
 }
 
 /**
@@ -31,6 +21,17 @@ function expiringItemsInfoNotificationTask() {
  */
 function expiringItemsWarningNotificationTask() {
   console.log('Starting expiring items notification task: {"notificationLevel": "warning"}')
+
+  maybeSendExpiringItemsNotification('warning')
+}
+
+/**
+ * Decides whether or not to send a notification
+ * based on the criteria for the passed notification level.
+ * @param {string} notificationLevel
+ * @customfunction
+ */
+function maybeSendExpiringItemsNotification(notificationLevel) {
   const medicalSuppliesData = medicalSuppliesSheet
     .getRange(
       1,
@@ -41,25 +42,15 @@ function expiringItemsWarningNotificationTask() {
     .getValues()
 
   const items = getJsonFromArray(medicalSuppliesData)
+  const itemsIncludedStatus = filterByStatus(items, excludedStatuses)
 
-  maybeSendExpiringItemsNotification(items, 'warning')
-}
-
-/**
- * Decides whether or not to send a notification.
- * @param {json} items
- * @param {string} notificationLevel
- * @customfunction
- */
-function maybeSendExpiringItemsNotification(items, notificationLevel) {
   switch (notificationLevel) {
     case 'info': 
-      var itemsIncludedStatus = filterByStatus(items, excludedStatuses)
-      var itemsIncludedStatusInfoDays =
+      const itemsIncludedStatusInfoDays =
         filterByDaysRemaining(itemsIncludedStatus, '<=', INFO_DAYS)
 
       if (itemsIncludedStatusInfoDays.length >=1) {
-        var itemsIncludedStatusInfoDaysSorted =
+        const itemsIncludedStatusInfoDaysSorted =
           sortByExpirationDate(itemsIncludedStatusInfoDays, 'desc')
 
         sendExpiringItemsNotification(itemsIncludedStatusInfoDaysSorted, 'info')
@@ -68,22 +59,18 @@ function maybeSendExpiringItemsNotification(items, notificationLevel) {
       }
       break
     case 'warning':
-      var itemsIncludedStatus = filterByStatus(items, excludedStatuses)
-      var itemsTriggeringWarning =
+      const itemsTriggeringWarning =
         filterByDaysRemaining(itemsIncludedStatus, '==', WARNING_DAYS)
 
-      switch (itemsTriggeringWarning.length >= 1) {
-        case true:
-          var itemsIncludedStatusWarningDays =
+      if (itemsTriggeringWarning.length >= 1) {
+          const itemsIncludedStatusWarningDays =
             filterByDaysRemaining(itemsIncludedStatus, '<=', WARNING_DAYS)
-          var itemsIncludedStatusWarningDaysSorted =
+          const itemsIncludedStatusWarningDaysSorted =
             sortByExpirationDate(itemsIncludedStatusWarningDays, 'desc')
           
           sendExpiringItemsNotification(itemsIncludedStatusWarningDaysSorted, 'warning')
-          break
-        default:
-          console.log(`Expiring items notification task succeeded without sending: {"notificationLevel": "${notificationLevel}"}`)
-          break
+      } else {
+        console.log(`Expiring items notification task succeeded without sending: {"notificationLevel": "${notificationLevel}"}`)
       }
       break
   }
