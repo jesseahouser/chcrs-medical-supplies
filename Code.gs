@@ -10,25 +10,30 @@ const excludedStatuses = [
 ]
 
 /**
- * Converts a two dimensional array of spreadsheet data
- * to a JSON array of objects.
+ * Converts a two dimensional array of spreadsheet data like 
+ *   [[h1,h2,h3],[r1c1,r1c2,r1c3],[r2c1,r2c2,r2c3]]
+ * to a JSON array of objects like
+ *   [
+ *     {"h1":r1c1,"h2":r1c2,"h3":r1c3},
+ *     {"h1":r2c1,"h2":r2c2,"h3":r2c3},
+ *     {"h1":r3c1,"h2":r3c2,"h3":r3c3}
+ *   ]
  * @param {array} data
  * @return {json}
  * @customfunction
  */
 function getJsonFromArray(data) {
-  var obj = {}
+  const headers = data[0]
   var jsonArray = []
-  var headers = data[0]
-  var cols = headers.length
-  var row = []
 
-  for (var i = 1, l = data.length; i < l; i++) {
-    obj = {}
-    row = data[i]
+  // loop through the rows, skipping the first row headers at data[0]
+  for (var r = 1, numRows = data.length; r < numRows; r++) {
+    var obj = {}
+    var row = data[r]  // [r1c1,r1c2,r1c3]
 
-    for (var col = 0; col < cols; col++) {
-      obj[headers[col]] = row[col]
+    // loop through all the columns
+    for (var c = 0, numCols = headers.length; c < numCols; c++) {
+      obj[headers[c].toString()] = row[c]
     }
     
     jsonArray.push(obj)
@@ -40,17 +45,15 @@ function getJsonFromArray(data) {
 /**
  * Filters a JSON array of items by comparing against excluded statuses.
  * @param {json} items
- * @param {array} excludedTypes
+ * @param {array} excludedStatuses
  * @return {json}
  * @customfunction
  */
 function filterByStatus(items, excludedStatuses) {
-  const itemsFilteredByStatus = items
+  return itemsFilteredByStatus = items
     .filter(
       (item) => includesAny(excludedStatuses, item.status.split(', ')) !== true
     )
-
-  return itemsFilteredByStatus
 }
 
 /**
@@ -65,20 +68,20 @@ function includesAny(array, values) {
 }
 
 /**
- * Filters json array of items by way of:
+ * Filters a JSON array of items by way of:
  *   - the comparison operator
  *   - number of days until expiration
  * @param {json} items
- * @param {string} operator
+ * @param {string} comparisonOperator
  * @param {integer} numDays
  * @return {json}
  * @customfunction
  */
-function filterByDaysRemaining(items, operator, numDays) {
+function filterByDaysRemaining(items, comparisonOperator, numDays) {
   const itemsHavingValidExpirationDates = items.filter(
         (item) => isValidDate(item.expiration_date) == true
       )
-  switch (operator) {
+  switch (comparisonOperator) {
     case '==':
       return itemsHavingValidExpirationDates.filter(
         (item) => dateDiff(now, item.expiration_date) == numDays
@@ -104,15 +107,16 @@ function isValidDate(date) {
   return !isNaN(date.getTime())
 }
 
+sortByExpirationDate
 /**
- * Sorts items by expiration date in descending order.
+ * Sorts items by expiration date in ascending or descending order.
  * @param {json} items
- * @param {string} order
+ * @param {string} sortOrder
  * @return {json}
  * @customfunction
  */
-function sortByExpirationDate(items, order) {
-  switch (order) {
+function sortByExpirationDate(items, sortOrder) {
+  switch (sortOrder.toLowerCase()) {
     case 'asc' || 'ascending':
       return items.sort((a, b) => b.expiration_date - a.expiration_date)
       break
@@ -147,43 +151,43 @@ function dateDiff(date1, date2) {
  */
 function include(filename) {
   return HtmlService.createHtmlOutputFromFile(filename)
-      .getContent();
+    .getContent();
 }
 
 /**
- * Forms the item table body for the HTML email
+ * Forms the item table body for the HTML email.
  * @param {json} items
  * @return {string}
  * @customfunction
  */
 function formItemTableBody(items) {
-    var itemTableBody = ``
+  var itemTableBody = ``
 
-    for (var i = 0; i < items.length; i++) {
-      var daysUntilExpiration = dateDiff(now, items[i].expiration_date)
-      var formattedExpirationDate = Utilities
-        .formatDate(items[i].expiration_date, "EDT", "d MMM yyyy")
+  for (var i = 0; i < items.length; i++) {
+    var daysUntilExpiration = dateDiff(now, items[i].expiration_date)
+    var formattedExpirationDate = Utilities
+      .formatDate(items[i].expiration_date, "EDT", "d MMM yyyy")
 
-      switch (true) {
-        case daysUntilExpiration > 14:
-          var expirationText = `🟨 ${daysUntilExpiration}`
-          break
-        case daysUntilExpiration <= 14 && daysUntilExpiration > 0:
-          var expirationText = `🟠 ${daysUntilExpiration}`
-          break
-        case daysUntilExpiration <= 0:
-          var expirationText = `‼️ <b>EXPIRED</b>`
-          break
-      }
-
-      itemTableBody = itemTableBody + `
-        <tr>
-          <td>${items[i].item}
-          <td>${formattedExpirationDate}
-          <td>${expirationText}`
+    switch (true) {
+      case daysUntilExpiration > 14:
+        var expirationText = `🟨 ${daysUntilExpiration}`
+        break
+      case daysUntilExpiration <= 14 && daysUntilExpiration > 0:
+        var expirationText = `🟠 ${daysUntilExpiration}`
+        break
+      case daysUntilExpiration <= 0:
+        var expirationText = `‼️ <b>EXPIRED</b>`
+        break
     }
 
     itemTableBody = itemTableBody + `
+      <tr>
+        <td>${items[i].item}
+        <td>${formattedExpirationDate}
+        <td>${expirationText}`
+  }
+
+  itemTableBody = itemTableBody + `
 `
 
   return itemTableBody
