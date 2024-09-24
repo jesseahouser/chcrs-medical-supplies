@@ -29,7 +29,7 @@ function getJsonFromArray(data) {
   // loop through the rows, skipping the first row headers at data[0]
   for (var r = 1, numRows = data.length; r < numRows; r++) {
     var obj = {}
-    var row = data[r]  // [r1c1,r1c2,r1c3]
+    var row = data[r]
 
     // loop through all the columns
     for (var c = 0, numCols = headers.length; c < numCols; c++) {
