@@ -70,7 +70,7 @@ function maybeSendExpiringItemsNotification(notificationLevel) {
           
           sendExpiringItemsNotification(itemsIncludedStatusWarningDaysSorted, 'warning')
       } else {
-        console.log(`Expiring items notification task succeeded without sending: {"notificationLevel": "${notificationLevel}", "reason": "no items matching notification criteria found"}`)
+        console.log(`Expiring items notification task succeeded without sending: {"notificationLevel": "${notificationLevel}", "reason": "no items found matching notification criteria"}`)
       }
       break
   }
